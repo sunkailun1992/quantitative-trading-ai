@@ -1297,18 +1297,51 @@ public class DeepSeekService {
     }
 
 
+
     /**
-     * 提取JSON内容
+     * 从大模型返回内容中安全提取 JSON
+     * 支持 ```json 包裹、前后文本、异常兜底
      */
     private String extractJsonFromContent(String content) {
-        int start = content.indexOf('{');
-        int end = content.lastIndexOf('}') + 1;
-        if (start >= 0 && end > start) {
-            return content.substring(start, end);
-        }
-        throw new RuntimeException("未找到有效的JSON响应");
-    }
 
+        if (content == null || content.isBlank()) {
+            log.error("❌ AI 返回内容为空");
+            throw new RuntimeException("未找到有效的JSON响应");
+        }
+
+        String text = content.trim();
+
+        // 1️⃣ 移除 Markdown ```json ``` 包裹
+        if (text.startsWith("```")) {
+            text = text
+                    .replaceAll("(?s)^```json", "")
+                    .replaceAll("(?s)^```", "")
+                    .replaceAll("(?s)```$", "")
+                    .trim();
+        }
+
+        // 2️⃣ 定位 JSON 主体
+        int jsonStart = text.indexOf('{');
+        int jsonEnd = text.lastIndexOf('}');
+
+        if (jsonStart == -1 || jsonEnd == -1 || jsonStart >= jsonEnd) {
+            log.error("❌ JSON 提取失败，原始内容如下：\n{}", content);
+            throw new RuntimeException("未找到有效的JSON响应");
+        }
+
+        String json = text.substring(jsonStart, jsonEnd + 1);
+
+        // 3️⃣ 基础合法性校验（防止 AI 半截 JSON）
+        try {
+            objectMapper.readTree(json);
+        } catch (Exception e) {
+            log.error("❌ JSON 结构非法：{}\n原始内容：{}", json, content);
+            throw new RuntimeException("AI 返回 JSON 结构非法", e);
+        }
+
+        log.info("🧩 成功提取 AI JSON：{}", json);
+        return json;
+    }
     /**
      * 获取备用决策（基于新的RSI策略）
      */
