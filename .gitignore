@@ -3,7 +3,7 @@ HELP.md
 build/
 target/**
 logs/**
-src/main/resources/application.yml
+
 ### STS ###
 .apt_generated
 .classpath
@@ -31,3 +31,4 @@ out/
 
 ### VS Code ###
 .vscode/
+src/main/resources/application.yml

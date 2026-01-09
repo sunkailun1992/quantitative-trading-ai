@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -1147,11 +1148,11 @@ public class DeepSeekService {
 
         try {
             String requestBodyJson = objectMapper.writeValueAsString(requestBody);
-            log.debug("🔧 发送给DeepSeek的请求体: {}", requestBodyJson);
+            log.info("🔧 发送给DeepSeek的请求体: {}", requestBodyJson);
 
-            String response = webClient.post().uri("/chat/completions").header("Authorization", "Bearer " + apiKey).header("Content-Type", "application/json").bodyValue(requestBody).retrieve().bodyToMono(String.class).block();
+            String response = webClient.post().uri("/chat/completions").header("Authorization", "Bearer " + apiKey).header("Content-Type", "application/json").bodyValue(requestBody).retrieve().bodyToMono(String.class) .timeout(Duration.ofMinutes(30)).block();
 
-            log.debug("✅ DeepSeek API响应: {}", response);
+            log.info("✅ DeepSeek API响应: {}", response);
             return response;
 
         } catch (Exception e) {

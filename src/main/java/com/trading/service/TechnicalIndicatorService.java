@@ -1,8 +1,10 @@
 package com.trading.service;                                           // 包声明：服务所在包
 
 // ===================== 依赖导入 =====================
+
 import lombok.extern.slf4j.Slf4j;                                      // 引入Lombok日志
 import org.springframework.stereotype.Service;                         // 引入Spring服务注解
+
 import java.util.ArrayList;                                            // 引入ArrayList
 import java.util.Collections;                                          // 引入Collections工具类
 import java.util.List;                                                 // 引入List接口
@@ -52,15 +54,17 @@ public class TechnicalIndicatorService {                               // 技术
     }
 
     // ===================== EMA（与TradingView一致） =====================
+
     /**
      * 计算单个周期的最新EMA值（与TradingView一致）                      // 注释：返回序列最后一根的EMA
+     *
      * @param closes 升序收盘价序列                                     // 参数：必须最老→最新
      * @param period 周期（如20/50/144/288/338）                         // 参数：EMA周期
      */
     public double calculateEMA(List<Double> closes, int period) {      // 方法：计算EMA最新值
         List<Double> src = sanitize(closes);                           // 清洗空值/NaN并复制
         if (src.size() < period || period < 1) {                       // 若样本不足或周期非法
-            log.warn("⚠️ EMA计算: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
+            log.debug("⚠️ EMA计算: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
             return 0.0;                                                // 返回0兜底
         }
         double seed = mean(src.subList(0, period));                    // 取前period根SMA作为种子
@@ -91,6 +95,7 @@ public class TechnicalIndicatorService {                               // 技术
     }
 
     // ===================== MACD（12,26,9 与TradingView一致） =====================
+
     /**
      * 计算MACD最新值（DIF/DEA/HIST）                                   // 注释：对齐TV的三条曲线
      * - EMA12/EMA26 种子：各自前N根SMA                                 // 规则：SMA作为EMA种子
@@ -101,7 +106,7 @@ public class TechnicalIndicatorService {                               // 技术
     public MACDResult calculateMACD(List<Double> closes, int fast, int slow, int signal) { // 方法：计算MACD
         List<Double> src = sanitize(closes);                           // 清洗数据
         if (src.size() < Math.max(slow, fast) + signal) {              // 长度检查：至少要覆盖慢线+信号
-            log.warn("⚠️ MACD计算: 数据不足 (size={}, need>={})", src.size(), Math.max(slow, fast) + signal); // 打印警告
+            log.debug("⚠️ MACD计算: 数据不足 (size={}, need>={})", src.size(), Math.max(slow, fast) + signal); // 打印警告
             return new MACDResult(0, 0, 0);                            // 返回零结果
         }
         List<Double> emaFast = calculateEMASeries(src, fast);          // 计算EMA_fast序列
@@ -120,19 +125,21 @@ public class TechnicalIndicatorService {                               // 技术
     }
 
     // ===================== RSI（Wilder’s smoothing） =====================
+
     /**
      * 计算RSI最新值（Wilder算法）                                      // 注释：先SMA，后EMA式平滑
      */
     public Double calculateRSI(List<Double> closes, int period) {      // 方法：计算RSI
         List<Double> src = sanitize(closes);                           // 清洗数据
         if (src.size() <= period) {                                    // 样本不足检查
-            log.warn("⚠️ RSI计算: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
+            log.debug("⚠️ RSI计算: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
             return 50.0;                                               // 返回中性值
         }
         double gain = 0.0, loss = 0.0;                                 // 初始化累计涨跌
         for (int i = 1; i <= period; i++) {                            // 统计前period段
             double ch = src.get(i) - src.get(i - 1);                   // 当前差分
-            if (ch > 0) gain += ch; else loss -= ch;                   // 累计涨跌
+            if (ch > 0) gain += ch;
+            else loss -= ch;                   // 累计涨跌
         }
         double avgGain = gain / period;                                // 初始平均涨幅（SMA）
         double avgLoss = loss / period;                                // 初始平均跌幅（SMA）
@@ -150,6 +157,7 @@ public class TechnicalIndicatorService {                               // 技术
     }
 
     // ===================== ATR（Wilder’s smoothing） =====================
+
     /**
      * 计算ATR最新值（可选择是否排除末尾未收盘K线）                       // 注释：excludeLast=true可对齐TV“仅收盘”模式
      */
@@ -162,7 +170,7 @@ public class TechnicalIndicatorService {                               // 技术
             size -= 1;                                                 // 末尾减一
         }
         if (size <= period) {                                          // 样本不足检查
-            log.warn("⚠️ ATR计算: 数据不足 (size={}, period={})", size, period); // 打印警告
+            log.debug("⚠️ ATR计算: 数据不足 (size={}, period={})", size, period); // 打印警告
             return 0.0;                                                // 返回0
         }
         double[] trs = new double[size];                               // 创建TR数组
@@ -190,13 +198,14 @@ public class TechnicalIndicatorService {                               // 技术
     }
 
     // ===================== 布林带（位置/带宽） =====================
+
     /**
      * 计算布林带位置（0~100，50为中轨）                                 // 注释：position= (price-lower)/(upper-lower)*100
      */
     public Double calculateBollingerBandsPosition(List<Double> closes, int period) { // 方法：BOLL位置
         List<Double> src = sanitize(closes);                           // 清洗数据
         if (src.size() < period) {                                     // 样本不足
-            log.warn("⚠️ 布林带位置: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
+            log.debug("⚠️ 布林带位置: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
             return 50.0;                                               // 返回中性50
         }
         List<Double> win = src.subList(src.size() - period, src.size());// 取窗口
@@ -216,7 +225,7 @@ public class TechnicalIndicatorService {                               // 技术
     public Double calculateBBBandwidth(List<Double> closes, int period) { // 方法：BOLL带宽
         List<Double> src = sanitize(closes);                           // 清洗数据
         if (src.size() < period) {                                     // 样本不足
-            log.warn("⚠️ 布林带带宽: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
+            log.debug("⚠️ 布林带带宽: 数据不足 (size={}, period={})", src.size(), period); // 打印警告
             return 10.0;                                               // 返回兜底
         }
         List<Double> win = src.subList(src.size() - period, src.size());// 取窗口
@@ -290,7 +299,10 @@ public class TechnicalIndicatorService {                               // 技术
         out.set(start + seedSlice.size() - 1, ema);                      // 在种子末尾写入首个EMA
         for (int t = start + seedSlice.size(); t < series.size(); t++) { // 从下一位开始迭代
             Double v = series.get(t);                                    // 当前值
-            if (v == null) { out.set(t, null); continue; }               // 遇null则写null跳过
+            if (v == null) {
+                out.set(t, null);
+                continue;
+            }               // 遇null则写null跳过
             ema = ema + kf * (v - ema);                                  // EMA递推
             out.set(t, ema);                                             // 写入结果
         }
@@ -308,10 +320,21 @@ public class TechnicalIndicatorService {                               // 技术
             this.dea = dea;                                             // 赋值DEA
             this.hist = hist;                                           // 赋值HIST
         }
-        public double getDif() { return dif; }                          // Getter：DIF
-        public double getDea() { return dea; }                          // Getter：DEA
-        public double getHistogram() { return hist; }                   // Getter：HIST
-        @Override public String toString() {                             // 重写toString
+
+        public double getDif() {
+            return dif;
+        }                          // Getter：DIF
+
+        public double getDea() {
+            return dea;
+        }                          // Getter：DEA
+
+        public double getHistogram() {
+            return hist;
+        }                   // Getter：HIST
+
+        @Override
+        public String toString() {                             // 重写toString
             return String.format("MACD[DIF=%.4f, DEA=%.4f, HIST=%.4f]", dif, dea, hist); // 友好输出
         }
     }
