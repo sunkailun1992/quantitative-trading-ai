@@ -137,6 +137,11 @@ public class DeepSeekService {
         prompt.append("做空信号（SELL）与做多（BUY）同等重要，根据趋势判断，不要只会单方面做多或做空。\n\n");
         prompt.append("杠杆需根据波动率与信号强度动态调整，最大不超过20倍。\n\n");
 
+        // 🚨 新增：输出格式强制要求
+        prompt.append("🚨 输出格式强制要求：\n");
+        prompt.append("你的输出必须是【纯JSON格式】，不要包含任何Markdown代码块标记（如```json```）、解释文字、额外说明或其他内容！\n");
+        prompt.append("直接输出JSON对象，系统会直接解析你的输出。\n\n");
+
         // === 🚨 新增：交易规则强制要求（必须放在技术分析之前）===
         prompt.append("=== 🚨 交易规则强制要求 ===\n");
         prompt.append("以下规则**必须优先于所有技术指标分析**，AI必须严格遵守：\n\n");
@@ -1058,9 +1063,11 @@ public class DeepSeekService {
         prompt.append("- 趋势反转：立即止损，保护本金\n"); // 强调立即止损
         prompt.append("- 震荡行情：保持观望，等待突破\n"); // 强调震荡观望
 
+
         // === 📋 输出格式要求 - 优化推理结构 ===
         prompt.append("\n=== 📋 输出格式要求 ===\n");
-        prompt.append("请严格按以下JSON格式输出，不要包含其他文字：\n");
+        prompt.append("🚨 重要：你必须只输出【纯JSON格式】，不要包含任何Markdown代码块标记（如```json```）、解释文字或其他内容！\n");
+        prompt.append("🚨 系统会直接解析你的输出，任何非JSON内容都会导致解析失败！\n\n");
         prompt.append("{\n");
         prompt.append("  \"action\": \"BUY|SELL|HOLD|CLOSE_LONG|CLOSE_SHORT\",\n");
         prompt.append("  \"confidence\": 0.0-1.0,\n");
@@ -1124,9 +1131,10 @@ public class DeepSeekService {
                 "   - RSI背离分析：[背离信号的重要性和可靠性]\\n" +
                 "   - 关键位置分析：[支撑或阻力位有效性]\\n" +
                 "   - 风险控制措施：[仓位、杠杆、止损安排]\\n" +
-                "   - 预期收益目标：[短期和中期目标],\n");
-        prompt.append("}。\n");
+                "   - 预期收益目标：[短期和中期目标]\"\n");
+        prompt.append("}\n\n");
 
+        prompt.append("🚨 最后再次强调：只输出纯JSON格式，不要有任何其他内容！\n");
         return prompt.toString();
     }
 
