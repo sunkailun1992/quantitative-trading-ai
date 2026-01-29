@@ -261,18 +261,21 @@ public class DeepSeekService {
         Map<String, String> nameMap = Map.of("15m", "15分钟", "1h", "1小时", "1d", "1天", "1w", "1周");
 
         // === 1️⃣ 定义时间区间 ===
-        LocalDateTime from15m = now.minusDays(1);    // 15分钟 → 最近1天
-        LocalDateTime from1h = now.minusDays(3);    // 1小时 → 最近3天
-        LocalDateTime from1d = now.minusDays(14);   // 1天 → 最近14天
-        LocalDateTime from1w = now.minusMonths(2);  // 1周 → 最近2个月
+        LocalDateTime from15m = now.minusDays(7);    // 15分钟 → 最近7天
+        LocalDateTime from1h = now.minusDays(30);    // 1小时 → 最近30天
+        LocalDateTime from1d = now.minusDays(360);   // 1天 → 最近14天
 
         // === 2️⃣ 逐周期查询数据库 ===
         // ========================================================================
-        // ===================== 15分钟周期（最近1天） ===========================
+        // ===================== 15分钟周期（最近7天） ===========================
         // ========================================================================
         List<MarketKlineEntity> all15m = marketKlineRepository
-                .findBySymbolOrderByOpenTimeAsc(md15m.getSymbol());                                  // ✅ 获取全部15分钟历史数据
-        prompt.append("\n📘 [15分钟K线 - 最近1天 + 技术指标]\n");                          // 添加区块标题
+                .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
+                        md15m.getSymbol(),                    // 交易对
+                        from15m,                   // 起始时间
+                        now                        // 结束时间
+                );
+        prompt.append("\n📘 [15分钟K线 - 最近7天 + 技术指标]\n");                          // 添加区块标题
 
         List<Double> closes15m = new ArrayList<>();                                       // 收盘价列表
         List<Double> highs15m = new ArrayList<>();                                        // 最高价列表
@@ -351,11 +354,15 @@ public class DeepSeekService {
         }
 
         // ========================================================================
-        // ===================== 1小时周期（最近3天） =============================
+        // ===================== 1小时周期（最近30天） =============================
         // ========================================================================
         List<MarketKline1hEntity> all1h = marketKline1hRepository
-                .findBySymbolOrderByOpenTimeAsc(md1h.getSymbol());                                 // ✅ 获取全部1小时历史数据
-        prompt.append("\n📗 [1小时K线 - 最近3天 + 技术指标]\n");                           // 添加标题
+                .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
+                        md1h.getSymbol(),
+                        from1h,
+                        now
+                );
+        prompt.append("\n📗 [1小时K线 - 最近30天 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1h = new ArrayList<>();
         List<Double> highs1h = new ArrayList<>();
@@ -438,11 +445,15 @@ public class DeepSeekService {
         }
 
         // ========================================================================
-        // ===================== 日线周期（最近14天） =============================
+        // ===================== 日线周期（最近360天） =============================
         // ========================================================================
         List<MarketKlineDailyEntity> all1d = marketKlineDailyRepository
-                .findBySymbolOrderByOpenTimeAsc(md1d.getSymbol());                                 // ✅ 获取全部日线数据
-        prompt.append("\n📙 [日线K线 - 最近14天 + 技术指标]\n");                           // 添加标题
+                .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
+                        md1d.getSymbol(),
+                        from1d,
+                        now
+                );
+        prompt.append("\n📙 [日线K线 - 最近360天 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1d = new ArrayList<>();
         List<Double> highs1d = new ArrayList<>();
@@ -529,7 +540,7 @@ public class DeepSeekService {
         // ========================================================================
         List<MarketKlineWeeklyEntity> all1w = marketKlineWeeklyRepository
                 .findBySymbolOrderByOpenTimeAsc(md1w.getSymbol());                                 // ✅ 获取全部周线数据
-        prompt.append("\n📒 [周线K线 - 最近2个月 + 技术指标]\n");                           // 添加标题
+        prompt.append("\n📒 [周线K线 - 全部 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1w = new ArrayList<>();
         List<Double> highs1w = new ArrayList<>();
@@ -553,62 +564,60 @@ public class DeepSeekService {
             double bbPos = indicatorService.calculateBollingerBandsPosition(closes1w, 20);
             double bbWidth = indicatorService.calculateBBBandwidth(closes1w, 20);
 
-            if (!k.getOpenTime().isBefore(from1w) && !k.getOpenTime().isAfter(now)) {
-                prompt.append(String.format("时间: %s\n", k.getOpenTime()));
-                prompt.append(String.format("价格: 开%.2f 高%.2f 低%.2f 收%.2f\n",
-                        k.getOpen(), k.getHigh(), k.getLow(), k.getClose()));
+            prompt.append(String.format("时间: %s\n", k.getOpenTime()));
+            prompt.append(String.format("价格: 开%.2f 高%.2f 低%.2f 收%.2f\n",
+                    k.getOpen(), k.getHigh(), k.getLow(), k.getClose()));
 
-                // RSI指标
-                prompt.append(String.format("📊 RSI(14): %.2f → %s\n", rsi14, getRSISignalDescription(rsi14)));
+            // RSI指标
+            prompt.append(String.format("📊 RSI(14): %.2f → %s\n", rsi14, getRSISignalDescription(rsi14)));
 
-                // MACD指标
-                String macdStatus = getMACDStatus(macd.getDif(), macd.getDea());
-                prompt.append(String.format("🔄 MACD: DIF=%.3f, DEA=%.3f, Histogram=%.3f %s\n",
-                        macd.getDif(), macd.getDea(), macd.getHistogram(), macdStatus));
+            // MACD指标
+            String macdStatus = getMACDStatus(macd.getDif(), macd.getDea());
+            prompt.append(String.format("🔄 MACD: DIF=%.3f, DEA=%.3f, Histogram=%.3f %s\n",
+                    macd.getDif(), macd.getDea(), macd.getHistogram(), macdStatus));
 
-                // EMA指标
-                String emaTrend = ema20 > ema50 ? "上升趋势" : "下降趋势";
-                prompt.append(String.format("📉 EMA20,50指标和短中期趋势: EMA20=%.2f, EMA50=%.2f → 当前为%s\n",
-                        ema20, ema50, emaTrend));
+            // EMA指标
+            String emaTrend = ema20 > ema50 ? "上升趋势" : "下降趋势";
+            prompt.append(String.format("📉 EMA20,50指标和短中期趋势: EMA20=%.2f, EMA50=%.2f → 当前为%s\n",
+                    ema20, ema50, emaTrend));
 
-                // 长周期EMA系列
-                prompt.append("📊 EMA144,168,288,338长周期趋势指标：\n");
-                prompt.append(String.format("   🔹 EMA144 = %.2f (长期趋势基准)\n", ema144));
-                prompt.append(String.format("   🔹 EMA168 = %.2f (扩展趋势)\n", ema168));
-                prompt.append(String.format("   🔹 EMA288 = %.2f (结构趋势)\n", ema288));
-                prompt.append(String.format("   🔹 EMA338 = %.2f (超长趋势)\n", ema338));
+            // 长周期EMA系列
+            prompt.append("📊 EMA144,168,288,338长周期趋势指标：\n");
+            prompt.append(String.format("   🔹 EMA144 = %.2f (长期趋势基准)\n", ema144));
+            prompt.append(String.format("   🔹 EMA168 = %.2f (扩展趋势)\n", ema168));
+            prompt.append(String.format("   🔹 EMA288 = %.2f (结构趋势)\n", ema288));
+            prompt.append(String.format("   🔹 EMA338 = %.2f (超长趋势)\n", ema338));
 
-                // EMA多层级排列分析
-                boolean fullBullTrend = ema20 > ema50 && ema50 > ema144 && ema144 > ema288 && ema288 > ema338;
-                boolean fullBearTrend = ema20 < ema50 && ema50 < ema144 && ema144 < ema288 && ema288 < ema338;
+            // EMA多层级排列分析
+            boolean fullBullTrend = ema20 > ema50 && ema50 > ema144 && ema144 > ema288 && ema288 > ema338;
+            boolean fullBearTrend = ema20 < ema50 && ema50 < ema144 && ema144 < ema288 && ema288 < ema338;
 
-                if (fullBullTrend) {
-                    prompt.append("   🟢 完整多头均线排列，所有周期趋势强劲上行。\n");
-                } else if (fullBearTrend) {
-                    prompt.append("   🔴 完整空头均线排列，所有周期趋势明显下行。\n");
-                } else if (ema20 > ema50 && ema50 > ema144) {
-                    prompt.append("   🟡 短中期多头排列，但长期趋势需要确认。\n");
-                } else if (ema20 < ema50 && ema50 < ema144) {
-                    prompt.append("   🟠 短中期空头排列，但长期趋势需要确认。\n");
-                } else {
-                    prompt.append("   ⚪ 均线结构混乱，可能处于大级别震荡整理阶段。\n");
-                }
-
-                // 价格相对于长周期EMA的位置分析
-                double currentPrice = k.getClose();
-                String priceVsEma144 = currentPrice > ema144 ? "价格在EMA144之上" : "价格在EMA144之下";
-                prompt.append(String.format("   📍 %s (EMA144: %.2f)\n", priceVsEma144, ema144));
-                String priceVsEma288 = currentPrice > ema288 ? "价格在EMA288之上" : "价格在EMA288之下";
-                prompt.append(String.format("   📍 %s (EMA288: %.2f)\n", priceVsEma288, ema288));
-
-                // 布林带指标
-                prompt.append(String.format("📈 布林带位置=%.1f%%, 带宽=%.1f%%\n", bbPos, bbWidth));
-
-                // ATR波动性指标
-                prompt.append(String.format("🌪️ ATR(14)=%.4f\n", atr14));
-
-                prompt.append("─".repeat(40) + "\n");
+            if (fullBullTrend) {
+                prompt.append("   🟢 完整多头均线排列，所有周期趋势强劲上行。\n");
+            } else if (fullBearTrend) {
+                prompt.append("   🔴 完整空头均线排列，所有周期趋势明显下行。\n");
+            } else if (ema20 > ema50 && ema50 > ema144) {
+                prompt.append("   🟡 短中期多头排列，但长期趋势需要确认。\n");
+            } else if (ema20 < ema50 && ema50 < ema144) {
+                prompt.append("   🟠 短中期空头排列，但长期趋势需要确认。\n");
+            } else {
+                prompt.append("   ⚪ 均线结构混乱，可能处于大级别震荡整理阶段。\n");
             }
+
+            // 价格相对于长周期EMA的位置分析
+            double currentPrice = k.getClose();
+            String priceVsEma144 = currentPrice > ema144 ? "价格在EMA144之上" : "价格在EMA144之下";
+            prompt.append(String.format("   📍 %s (EMA144: %.2f)\n", priceVsEma144, ema144));
+            String priceVsEma288 = currentPrice > ema288 ? "价格在EMA288之上" : "价格在EMA288之下";
+            prompt.append(String.format("   📍 %s (EMA288: %.2f)\n", priceVsEma288, ema288));
+
+            // 布林带指标
+            prompt.append(String.format("📈 布林带位置=%.1f%%, 带宽=%.1f%%\n", bbPos, bbWidth));
+
+            // ATR波动性指标
+            prompt.append(String.format("🌪️ ATR(14)=%.4f\n", atr14));
+
+            prompt.append("─".repeat(40) + "\n");
         }
 
         // === 7️⃣ 当前账户与持仓状态（完善版） ===
