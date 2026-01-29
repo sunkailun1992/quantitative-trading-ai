@@ -30,7 +30,7 @@ public class PortfolioStatus {
     /** 📈 当前盈亏百分比（保证金收益率%） */
     private Double pnLPercent;
 
-    /** 💱 当前交易对（symbol，例如BTCUSDT） */
+    /** 💱 当前交易对（symbol，例如USDT） */
     private String symbol;
 
     /** 🕒 更新时间（快照生成时间） */

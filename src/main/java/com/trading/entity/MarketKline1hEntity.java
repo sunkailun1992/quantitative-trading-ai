@@ -30,7 +30,7 @@ public class MarketKline1hEntity {
     private Long id;
 
     @Column(nullable = false, length = 20)
-    @Comment("交易对符号，例如 BTCUSDT")
+    @Comment("交易对符号")
     private String symbol;
 
     @Column(name = "interval_min", nullable = false)

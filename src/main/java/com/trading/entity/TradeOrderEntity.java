@@ -34,7 +34,7 @@ public class TradeOrderEntity {
     private String orderId;
 
     /** 交易对 */
-    @Column(name = "symbol", length = 20, nullable = false, columnDefinition = "VARCHAR(20) COMMENT '交易对，例如BTCUSDT'")
+    @Column(name = "symbol", length = 20, nullable = false, columnDefinition = "VARCHAR(20) COMMENT '交易对，例如USDT'")
     private String symbol;
 
     /**

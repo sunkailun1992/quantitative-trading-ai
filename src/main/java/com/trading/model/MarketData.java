@@ -20,7 +20,7 @@ public class MarketData {
     /** =========================
      * 🧩 基础市场信息
      * ========================= */
-    private String symbol;              // 交易对（如 BTCUSDT）
+    private String symbol;              // 交易对（如 USDT）
     private String period;              // ✅ 周期标识（15m / 1h / 1d / 1w）
     private Double currentPrice;        // 当前价格
     private Double priceChange24h;      // 24小时价格变化百分比 (%)

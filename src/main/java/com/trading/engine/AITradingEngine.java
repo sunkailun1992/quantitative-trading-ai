@@ -17,6 +17,7 @@ import com.trading.service.*;
 import com.trading.util.DingDingMessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -56,7 +57,8 @@ public class AITradingEngine {
     private boolean tradingEnabled = true;
 
     private double portfolioPeakValue = 0.0;
-
+    @Value("${trading.symbol}")
+    private String symbol;
     /**
      * 🧠 处理多周期市场数据（增强版）
      * 支持 15m / 1h / 1d / 1w 四周期联合分析。
@@ -251,12 +253,12 @@ public class AITradingEngine {
             }
 
             // === 4️⃣ 设置杠杆 ===
-            boolean setSuccess = bybitTradingService.setLeverage("BTCUSDT", leverageToUse);  // 设置实际杠杆
+            boolean setSuccess = bybitTradingService.setLeverage(symbol, leverageToUse);  // 设置实际杠杆
             if (!setSuccess) {
                 log.error("❌ 设置杠杆失败，回退为默认10x");  // 如果设置失败，使用默认10倍杠杆
             }
             // === 5️⃣ 校验风险与仓位限制 ===
-            if (!riskManagementService.validateOrder("BTCUSDT", decision.getAction(), quantity, totalCapital, currentPosition)) {
+            if (!riskManagementService.validateOrder(symbol, decision.getAction(), quantity, totalCapital, currentPosition)) {
                 log.warn("🚫 风控拒绝执行订单");  // 如果风控拒绝执行，直接返回
                 return;
             }
@@ -315,7 +317,7 @@ public class AITradingEngine {
 
         // === 🕒 时间与市场信息 ===
         log.info("⏰ 时间戳: {}", LocalDateTime.now()); // 当前日志时间
-        log.info("💱 交易对: {}", data.getSymbol());   // 如 BTCUSDT
+        log.info("💱 交易对: {}", data.getSymbol());   //  交易对
         log.info("🧭 周期: {}", data.getPeriod());     // 如 15m / 1h / 1d / 1w
         log.info("💰 当前价格: ${}", String.format("%.2f", data.getCurrentPrice())); // 当前市价
         // === 计算并输出 24小时真实涨跌幅 ===
@@ -813,7 +815,7 @@ public class AITradingEngine {
     /**
      * 计算过去24小时价格变化百分比（基于数据库K线）
      *
-     * @param symbol 交易对（如 BTCUSDT）
+     * @param symbol 交易对
      * @return 过去24小时涨跌百分比，若无数据返回 null
      */
     private Double calculatePriceChange24h(String symbol) {

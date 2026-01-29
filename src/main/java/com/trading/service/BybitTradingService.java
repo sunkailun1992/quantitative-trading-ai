@@ -49,7 +49,7 @@ public class BybitTradingService {
     private final WalletSnapshotRepository walletSnapshotRepository;
     private final PortfolioStatusRepository portfolioRepo;
 
-    @Value("${trading.symbol:BTCUSDT}")
+    @Value("${trading.symbol}")
     private String symbol;
 
     @Value("${bybit.api-key:}")
@@ -484,7 +484,7 @@ public class BybitTradingService {
             // 1️⃣ 构造请求参数
             Map<String, String> params = new HashMap<>();
             params.put("category", "linear"); // 线性合约（USDT本位）
-            params.put("symbol", symbol);     // 当前交易对（例如 BTCUSDT）
+            params.put("symbol", symbol);     // 当前交易对
 
             // 2️⃣ 发送签名请求（GET）
             String url = BYBIT_BASE_URL + "/v5/position/list";
@@ -1003,7 +1003,7 @@ public class BybitTradingService {
      * 设置合约杠杆（适用于Bybit V5接口）
      * 通过HttpUtil.signedPost发送签名请求
      *
-     * @param symbol   交易对，例如 "BTCUSDT"
+     * @param symbol   交易对
      * @param leverage 杠杆倍数（限制1~20）
      * @return true = 设置成功，false = 失败
      */
@@ -1055,7 +1055,7 @@ public class BybitTradingService {
     /**
      * 市价平仓（reduceOnly）：按净方向反向下单，将仓位在市价下全部或部分平掉
      *
-     * @param symbol   交易对，如 BTCUSDT
+     * @param symbol   交易对
      * @param closeQty 想要平掉的数量（<= 当前净持仓），若<=0则自动按全部净持仓
      * @return Bybit返回结果
      */
@@ -1205,7 +1205,7 @@ public class BybitTradingService {
     /**
      * 🤖 AI 智能下单通知（美化版）
      *
-     * @param symbol        交易对（如 BTCUSDT）
+     * @param symbol        交易对
      * @param side          买卖方向（BUY / SELL）
      * @param qty           下单数量
      * @param leverage      杠杆倍数

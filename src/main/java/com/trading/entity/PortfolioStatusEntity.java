@@ -35,9 +35,9 @@ public class PortfolioStatusEntity {
             columnDefinition = "BIGINT COMMENT '主键ID'")
     private Long id;
 
-    /** 💱 交易对（symbol，例如 BTCUSDT） */
+    /** 💱 交易对（symbol，例如 USDT） */
     @Column(name = "symbol", nullable = false, length = 20,
-            columnDefinition = "VARCHAR(20) COMMENT '交易对（symbol，例如BTCUSDT）'")
+            columnDefinition = "VARCHAR(20) COMMENT '交易对（symbol，例如USDT）'")
     private String symbol;
 
     /** 💰 当前账户总资产（total equity） */

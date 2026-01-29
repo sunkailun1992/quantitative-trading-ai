@@ -1443,7 +1443,7 @@ public class DeepSeekService {
     /**
      * 🚀 推送「当日大行情 + 交易员观点」到钉钉
      *
-     * @param symbol 币种（如 BTCUSDT）
+     * @param symbol 币种
      */
     public void pushMarketAndTraderSummary(String symbol) {
         try {
@@ -1588,7 +1588,7 @@ public class DeepSeekService {
     /**
      * 计算过去24小时价格变化百分比（基于数据库K线）
      *
-     * @param symbol 交易对（如 BTCUSDT）
+     * @param symbol 交易对
      * @return 过去24小时涨跌百分比，若无数据返回 null
      */
     private Double calculatePriceChange24h(String symbol) {

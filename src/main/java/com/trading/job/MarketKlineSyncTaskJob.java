@@ -12,6 +12,7 @@ import com.trading.repository.MarketKlineWeeklyRepository;
 import com.trading.service.BybitTradingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,8 @@ public class MarketKlineSyncTaskJob {
     private final MarketKlineDailyRepository marketKlineDailyRepository; // 日K数据库仓库
     private final MarketKlineWeeklyRepository marketKlineWeeklyRepository; // 周K数据库仓库
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final String SYMBOL = "BTCUSDT";  // 默认交易对，可从配置文件中注入
+    @Value("${trading.symbol}")
+    private String SYMBOL;
     private static final String INTERVAL_D = "D";                   // 日K间隔（Bybit支持"D"或"1440"）
     private static final int DAYS = 30;                           // 同步天数：30天
     private static final String INTERVAL_W = "W";                         // 周K线周期
@@ -46,7 +48,8 @@ public class MarketKlineSyncTaskJob {
     // 日期时间格式：2025-10-31 16:00:00
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
+    @Value("${trading.symbol}")
+    private String symbol;
     /**
      * 定时任务：每小时执行一次，从 Bybit 拉取最近两天的15分钟K线，写入数据库并刷新技术指标。
      */
@@ -60,7 +63,6 @@ public class MarketKlineSyncTaskJob {
             log.info("🕒 [{}] [定时任务启动] 同步最近2天的15分钟K线数据...", currentTime);
 
             // === Step 1️⃣ 定义参数 ===
-            final String symbol = "BTCUSDT";   // 交易对，可配置化
             final int intervalMin = 15;        // 15分钟周期
             final int limit = (24 * 60 / intervalMin); // 1天共96根K线
 

@@ -36,7 +36,7 @@ public class TraderStrategyEntity {
     @Comment("交易员名称")
     private String traderName;
 
-    /** 币种或交易对（例如 BTCUSDT） */
+    /** 币种或交易对（例如 USDT） */
     @Column(name = "symbol", nullable = false, length = 20, columnDefinition = "VARCHAR(20) COMMENT '交易币种或交易对'")
     @Comment("交易币种或交易对")
     private String symbol;

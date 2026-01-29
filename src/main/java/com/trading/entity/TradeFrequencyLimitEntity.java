@@ -25,7 +25,7 @@ public class TradeFrequencyLimitEntity {
     private Long id; // 主键ID
 
     @Column(name = "symbol", nullable = false, length = 20)
-    private String symbol; // 交易对，如BTCUSDT
+    private String symbol; // 交易对
 
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate; // 交易日期（按天统计）

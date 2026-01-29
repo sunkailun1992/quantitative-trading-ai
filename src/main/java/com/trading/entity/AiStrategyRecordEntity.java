@@ -71,7 +71,7 @@ public class AiStrategyRecordEntity {
     @Comment("触发条件说明（AI生成的完整条件文本）") // 列注释
     private String conditionTrigger;
 
-    /** 生成信号时的价格（例如BTCUSDT当前价） */
+    /** 生成信号时的价格（例如USDT当前价） */
     @Column(name = "price", precision = 18, scale = 8,
             columnDefinition = "DECIMAL(18,8) COMMENT 'AI生成信号时的价格'") // 列定义
     @Comment("AI生成信号时的价格") // 列注释

@@ -24,7 +24,7 @@ public class TraderStrategyService {
 
     /**
      * 取“当天 + 指定symbol”的所有交易员策略
-     * @param symbol 交易对（如 BTCUSDT）
+     * @param symbol 交易对
      * @return 当天的策略列表
      */
     public List<TraderStrategyEntity> getTodayStrategiesBySymbol(String symbol) { // 对外方法

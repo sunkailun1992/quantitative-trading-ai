@@ -31,9 +31,9 @@ public class MarketKlineEntity {
     @Comment("主键ID")
     private Long id;
 
-    /** 交易对，如 BTCUSDT */
+    /** 交易对 */
     @Column(nullable = false, length = 20)
-    @Comment("交易对符号，例如 BTCUSDT")
+    @Comment("交易对符号")
     private String symbol;
 
     /** K线周期（分钟） */

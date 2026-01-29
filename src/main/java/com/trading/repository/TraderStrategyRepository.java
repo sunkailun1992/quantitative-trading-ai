@@ -30,7 +30,7 @@ public interface TraderStrategyRepository extends JpaRepository<TraderStrategyEn
 
     /**
      * ✅ 新增：根据交易对与时间范围查询策略（用于“当天策略”）
-     * @param symbol 币种或交易对（如BTCUSDT）
+     * @param symbol 币种或交易对
      * @param startOfDay 当天开始时间
      * @param endOfDay 当天结束时间
      * @return 当天内的策略列表
