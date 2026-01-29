@@ -43,7 +43,7 @@ public class RealMarketDataService { // 真实市场数据服务类
     /**
      * 定时获取实时市场数据 - 增强版本 - 核心功能，用于驱动交易决策，它获取数据并触发AI交易引擎。
      */
-//    @Scheduled(cron = "0 3 * * * ?")
+    @Scheduled(cron = "0 3 * * * ?")
     public void fetchRealTimeMarketData() {
         if (!dataStreamEnabled) {
             return;
@@ -78,38 +78,15 @@ public class RealMarketDataService { // 真实市场数据服务类
             LocalDateTime from15m = now.minusDays(7);     // 15分钟K线，最近7天
             LocalDateTime from1h = now.minusDays(30);      // 1小时K线，最近30天
             LocalDateTime from1d = now.minusDays(360);    // 1日K线，最近一年
-//            LocalDateTime from1w = now.minusWeeks(104);   // 1周K线，最近2年
+            LocalDateTime from1w = now.minusWeeks(104);   // 1周K线，最近2年
 
             // ✅ 2️⃣ 分别从数据库中查询各周期的K线
-
-            // 15分钟K线
             List<MarketKlineEntity> klines15m =
-                    marketKlineRepository
-                            .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
-                                    symbol,                    // 交易对
-                                    from15m,                   // 起始时间
-                                    now                        // 结束时间
-                            );
-
-            // 1小时K线
+                    marketKlineRepository.findBySymbolOrderByOpenTimeAsc(symbol); // 15分钟升序
             List<MarketKline1hEntity> klines1h =
-                    marketKline1hRepository
-                            .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
-                                    symbol,
-                                    from1h,
-                                    now
-                            );
-
-            // 日K线
+                    marketKline1hRepository.findBySymbolOrderByOpenTimeAsc(symbol); // 1小时升序
             List<MarketKlineDailyEntity> klines1d =
-                    marketKlineDailyRepository
-                            .findBySymbolAndOpenTimeBetweenOrderByOpenTimeAsc(
-                                    symbol,
-                                    from1d,
-                                    now
-                            );
-
-            // 周K线
+                    marketKlineDailyRepository.findBySymbolOrderByOpenTimeAsc(symbol); // 日K升序
             List<MarketKlineWeeklyEntity> klines1w =
                     marketKlineWeeklyRepository.findBySymbolOrderByOpenTimeAsc(symbol); // 周K升序
             // ✅ 3️⃣ 日志输出数据量检查

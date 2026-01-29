@@ -5,7 +5,7 @@
     <!-- 💡 自动读取Spring配置的属性 -->
     <!-- ============================= -->
     <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
-    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="quantitative-trading-ai"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="quantitative-trading-ai-xau"/>
 
     <!-- ============================= -->
     <!-- 📄 通用日志输出格式 -->

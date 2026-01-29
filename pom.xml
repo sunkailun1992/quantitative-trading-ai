@@ -9,20 +9,20 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.trading</groupId> <!-- 项目组织标识 -->
-    <artifactId>quantitative-trading-ai</artifactId> <!-- 项目标识 -->
-    <version>1.4.40</version> <!-- 项目版本 -->
+    <artifactId>quantitative-trading-ai-xau</artifactId> <!-- 项目标识 -->
+    <version>1.0.0</version> <!-- 项目版本 -->
 
     <properties> <!-- 定义项目属性 -->
         <java.version>17</java.version>
     </properties>
 
     <dependencies> <!-- 项目依赖列表 -->
-<!--        <dependency>-->
-<!--            <groupId>io.netty</groupId>-->
-<!--            <artifactId>netty-resolver-dns-native-macos</artifactId>-->
-<!--            <version>4.1.108.Final</version>-->
-<!--            <classifier>osx-aarch_64</classifier>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <version>4.1.108.Final</version>
+            <classifier>osx-aarch_64</classifier>
+        </dependency>
         <!-- JSON处理 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
