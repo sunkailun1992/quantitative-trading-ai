@@ -2,6 +2,7 @@ HELP.md
 .gradle
 build/
 target/**
+xau/logs/**
 logs/**
 
 ### STS ###
