@@ -64,48 +64,104 @@ public class DeepSeekService {
     }
 
     /**
-     * 获取交易决策（确保使用真实投资组合数据）
+     * 🧠 获取交易决策（确保使用真实投资组合数据）
+     * 同时将 AI 推理说明写入大行情分析数据库（market_overview）
      */
-    public TradingDecision getTradingDecision(MarketData md15m, MarketData md1h, MarketData md1d, MarketData md1w, PortfolioStatus portfolio) {
-        String apiKey = deepseekApiKey;
+    public TradingDecision getTradingDecision(
+            MarketData md15m,                  // 15分钟行情数据
+            MarketData md1h,                   // 1小时行情数据
+            MarketData md1d,                   // 日线行情数据
+            MarketData md1w,                   // 周线行情数据
+            PortfolioStatus portfolio           // 当前账户投资组合状态
+    ) {
+        String apiKey = deepseekApiKey;        // 获取 DeepSeek API Key
 
-        if (apiKey == null || apiKey.isEmpty()) {
-            log.warn("DeepSeek API密钥未设置，使用备用策略");
-            return getFallbackDecision(md15m);
+        // ==================== 🔐 API KEY 校验 ====================
+        if (apiKey == null || apiKey.isEmpty()) {                 // 如果 API Key 为空
+            log.warn("DeepSeek API密钥未设置，使用备用策略");      // 日志提示
+            return getFallbackDecision(md15m);                    // 使用备用策略
         }
 
         try {
-            // 验证投资组合数据
-            if (isFallbackPortfolioData(portfolio)) {
-                log.warn("⚠️ AI决策使用备用投资组合数据，可能影响决策准确性");
+            // ==================== 📊 投资组合数据校验 ====================
+            if (isFallbackPortfolioData(portfolio)) {             // 判断是否为备用组合数据
+                log.warn("⚠️ AI决策使用备用投资组合数据，可能影响决策准确性"); // 风险提示日志
             }
-            // 构建原始决策提示词
-            String prompt = buildTradingPrompt(md15m, md1h, md1d, md1w, portfolio);
-            log.info("发送给DeepSeek的提示词: {}", prompt);
+            // ==================== 🧱 构建 AI 提示词 ====================
+            String prompt = buildTradingPrompt(                   // 构建 AI 提示词
+                    md15m,                                        // 15分钟行情
+                    md1h,                                         // 1小时行情
+                    md1d,                                         // 日线行情
+                    md1w,                                         // 周线行情
+                    portfolio                                     // 投资组合状态
+            );
+            log.info("📤 发送给DeepSeek的提示词: {}", prompt);      // 打印提示词日志（调试用）
 
-            // 获取原始AI决策
-            String response = sendChatRequest(prompt, apiKey);
-            TradingDecision originalDecision = parseAIDecision(response, md15m, portfolio);
 
-            // ===== Step 3️⃣ 保存原始 AI 策略记录 =====
-            AiStrategyRecordEntity strategyRecord = aiStrategyRecordRepository.save(AiStrategyRecordEntity.builder().strategyName("DeepSeek-RSI-Strategy").signal(originalDecision.getAction()).conditionTrigger(originalDecision.getReasoning()).price(BigDecimal.valueOf(md15m.getCurrentPrice())).suggestedQty(BigDecimal.valueOf(originalDecision.getPositionSize())).orderQty(BigDecimal.valueOf(originalDecision.getOrderQty())).confidence(BigDecimal.valueOf(originalDecision.getConfidence())).executionStatus("RAW_DECISION").createdAt(LocalDateTime.now()).build());
-            originalDecision.setStrategyRecordId(strategyRecord.getId()); // ✅ 添加这行
-            //推送订单提醒
-            pushMarketAndTraderSummary(md15m.getSymbol());
-            //消息提示
-            log.info("🧠 已保存原始 AI 策略记录 ID={}", strategyRecord.getId());
+            // ==================== 🤖 调用 AI 接口 ====================
+            String response = sendChatRequest(                     // 调用 DeepSeek API
+                    prompt,                                       // 提示词
+                    apiKey                                        // API Key
+            );
+            // ==================== 🧠 解析 AI 决策 ====================
+            TradingDecision originalDecision = parseAIDecision(    // 解析 AI JSON 响应
+                    response,                                     // AI 原始响应
+                    md15m,                                        // 当前行情
+                    portfolio                                     // 投资组合
+            );
+            // =========================================================
+            // 🧠 Step 1️⃣：写入【大行情分析数据库 market_overview】
+            // =========================================================
 
-            // 记录原始决策使用的数据源
-            if (isFallbackPortfolioData(portfolio)) {
-                log.info("🤖 AI原始决策基于备用投资组合数据");
+            MarketOverviewEntity overview = MarketOverviewEntity.builder() // 构建实体
+                    .author("DeepSeek-AI分析")                                // 作者来源标识
+                    .fullAnalysis(originalDecision.getReasoning())        // AI 推理全文
+                    .createdAt(LocalDateTime.now())                       // 当前时间
+                    .build();                                             // 构建对象
+
+            marketOverviewRepository.save(overview);                      // 写入数据库
+
+            log.info("🧠 已保存 AI 大行情分析记录 → market_overview | ID={}", overview.getId()); // 成功日志
+
+            // =========================================================
+            // 🧠 Step 2️⃣：保存原始 AI 策略记录（你原有逻辑）
+            // =========================================================
+
+            AiStrategyRecordEntity strategyRecord =
+                    aiStrategyRecordRepository.save(                     // 保存策略记录
+                            AiStrategyRecordEntity.builder()              // Builder 构建
+                                    .strategyName("DeepSeek-RSI-Strategy")// 策略名称
+                                    .signal(originalDecision.getAction()) // AI 动作
+                                    .conditionTrigger(originalDecision.getReasoning()) // 推理摘要
+                                    .price(BigDecimal.valueOf(md15m.getCurrentPrice())) // 当前价格
+                                    .suggestedQty(BigDecimal.valueOf(originalDecision.getPositionSize())) // 建议仓位
+                                    .orderQty(BigDecimal.valueOf(originalDecision.getOrderQty())) // 实际下单量
+                                    .confidence(BigDecimal.valueOf(originalDecision.getConfidence())) // 置信度
+                                    .executionStatus("RAW_DECISION")      // 执行状态
+                                    .createdAt(LocalDateTime.now())       // 时间
+                                    .build()                              // 构建对象
+                    );
+
+            originalDecision.setStrategyRecordId(strategyRecord.getId());  // 绑定策略记录ID
+
+            // ==================== 📢 推送提醒 ====================
+            pushMarketAndTraderSummary(md15m.getSymbol());                 // 推送行情+交易员摘要
+
+            log.info("🧠 已保存原始 AI 策略记录 ID={}", strategyRecord.getId()); // 日志
+
+            // ==================== 📊 数据源标记 ====================
+            if (isFallbackPortfolioData(portfolio)) {                      // 判断数据来源
+                log.info("🤖 AI原始决策基于备用投资组合数据");               // 备用数据日志
             } else {
-                log.info("🤖 AI原始决策基于真实投资组合数据");
+                log.info("🤖 AI原始决策基于真实投资组合数据");               // 真实数据日志
             }
-            return originalDecision;
+            return originalDecision;                                       // 返回 AI 决策对象
 
         } catch (Exception e) {
-            log.error("DeepSeek API调用失败: {}", e.getMessage(), e);
-            return getFallbackDecision(md15m);
+            // ==================== ❌ 异常处理 ====================
+            log.error("DeepSeek API调用失败: {}", e.getMessage(), e);       // 错误日志
+            return getFallbackDecision(md15m);                              // 返回备用策略
+
         }
     }
 
