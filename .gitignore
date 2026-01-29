@@ -2,7 +2,7 @@ HELP.md
 .gradle
 build/
 target/**
-logs/**
+xau/logs/**
 
 ### STS ###
 .apt_generated

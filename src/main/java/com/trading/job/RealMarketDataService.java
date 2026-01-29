@@ -43,7 +43,7 @@ public class RealMarketDataService { // 真实市场数据服务类
     /**
      * 定时获取实时市场数据 - 增强版本 - 核心功能，用于驱动交易决策，它获取数据并触发AI交易引擎。
      */
-    @Scheduled(cron = "0 3 * * * ?")
+//    @Scheduled(cron = "0 3 * * * ?")
     public void fetchRealTimeMarketData() {
         if (!dataStreamEnabled) {
             return;
@@ -75,9 +75,9 @@ public class RealMarketDataService { // 真实市场数据服务类
             log.info("📊 [{}] 开始从数据库加载多周期行情数据 (15m / 1h / 1d / 1w)", now);
 
             // ✅ 1️⃣ 定义每个周期的时间窗口范围
-            LocalDateTime from15m = now.minusDays(1);     // 15分钟K线，最近1天
-            LocalDateTime from1h = now.minusDays(6);      // 1小时K线，最近6天
-            LocalDateTime from1d = now.minusDays(180);    // 1日K线，最近半年
+            LocalDateTime from15m = now.minusDays(7);     // 15分钟K线，最近7天
+            LocalDateTime from1h = now.minusDays(30);      // 1小时K线，最近30天
+            LocalDateTime from1d = now.minusDays(365);    // 1日K线，最近1年
             LocalDateTime from1w = now.minusWeeks(104);   // 1周K线，最近2年
 
             // ✅ 2️⃣ 分别从数据库中查询各周期的K线

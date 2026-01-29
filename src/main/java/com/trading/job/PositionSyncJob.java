@@ -40,7 +40,7 @@ public class PositionSyncJob { // 定时任务类定义
     /**
      * 🕒 每30分钟执行一次账户同步
      */
-    @Scheduled(cron = "0 10 * * * ?") // 定时任务表达式（每30分钟）
+//    @Scheduled(cron = "0 10 * * * ?") // 定时任务表达式（每30分钟）
     public void syncAccountPosition() { // 定时执行方法
 
         // 🟢 打印任务启动日志
