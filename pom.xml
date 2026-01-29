@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.trading</groupId> <!-- 项目组织标识 -->
     <artifactId>quantitative-trading-ai</artifactId> <!-- 项目标识 -->
-    <version>1.4.50</version> <!-- 项目版本 -->
+    <version>1.4.51</version> <!-- 项目版本 -->
 
     <properties> <!-- 定义项目属性 -->
         <java.version>17</java.version>
