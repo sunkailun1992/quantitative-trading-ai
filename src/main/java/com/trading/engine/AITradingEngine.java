@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -532,13 +533,15 @@ public class AITradingEngine {
         md.append("━━━━━━━━━━━━━━━━━━━━━━━\n\n");
 
         // ========================== 📊 当日交易统计 ==========================
-        md.append("### 📊 当日交易活动统计\n");
-        LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
-        LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
+        String currentYear = String.valueOf(LocalDate.now().getYear());
+        md.append("### 📊 " + currentYear + "年交易活动统计\n");
+        LocalDateTime nowTime = LocalDateTime.now();                         // 当前时间
+        LocalDateTime startOfYear = LocalDate.now().withDayOfYear(1)         // 今年第一天
+                .atStartOfDay();                                             // 今年 01-01 00:00:00
 
         List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
                 data.getSymbol(),
-                start30Days,
+                startOfYear,
                 nowTime
         );
 
@@ -565,14 +568,13 @@ public class AITradingEngine {
 
         long lossCount = closedOrders.size() - winCount;
         double winRate = (winCount + lossCount) > 0 ? (winCount * 100.0 / (winCount + lossCount)) : 0.0;
-
-        md.append(String.format("🟢 今日开仓次数：%d 次  \n", openCount));
-        md.append(String.format("🔵 今日平仓次数：%d 次  \n", closeCount));
-        md.append(String.format("🏆 今日胜率：%.1f%% (盈利 %d 单 / 亏损 %d 单)  \n", winRate, winCount, lossCount));
+        md.append(String.format("🟢 " + currentYear + "年开仓次数：%d 次  \n", openCount));
+        md.append(String.format("🔵 " + currentYear + "年平仓次数：%d 次  \n", closeCount));
+        md.append(String.format("🏆 " + currentYear + "年胜率：%.1f%% (盈利 %d 单 / 亏损 %d 单)  \n", winRate, winCount, lossCount));
 
         // ========================== 📄 今日详细下单记录 ==========================
         if (!todayOrders.isEmpty()) {
-            md.append("\n\n### 📄 今日详细下单记录\n");
+            md.append("\n\n### 📄 " + currentYear + "年详细下单记录\n");
             DateTimeFormatter hhmmss = DateTimeFormatter.ofPattern("HH:mm:ss");
 
             for (TradeOrderEntity order : todayOrders) {
@@ -603,7 +605,7 @@ public class AITradingEngine {
                 ));
             }
         } else {
-            md.append("📭 今日暂无下单记录。\n");
+            md.append("📭 " + currentYear + "年暂无下单记录。\n");
         }
 
         md.append("━━━━━━━━━━━━━━━━━━━━━━━\n");
@@ -615,6 +617,7 @@ public class AITradingEngine {
         // ✅ 发送钉钉 Markdown
         DingDingMessageUtil.sendMarkdown("🤖 DeepSeek AI 交易决策报告", md.toString());
     }
+
     /**
      * 🧠 DeepSeek AI 交易日志推送（Discord版本）
      * - 与钉钉版本内容一致
@@ -693,13 +696,15 @@ public class AITradingEngine {
             md.append("━━━━━━━━━━━━━━━━━━━━━━━\n\n");
 
             // =============== 📊 当日交易活动统计 ===============
-            md.append("### 📊 当日交易活动统计\n");
-            LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
-            LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
+            String currentYear = String.valueOf(LocalDate.now().getYear());
+            md.append("### 📊 当年交易活动统计\n");
+            LocalDateTime nowTime = LocalDateTime.now();                         // 当前时间
+            LocalDateTime startOfYear = LocalDate.now().withDayOfYear(1)         // 今年第一天
+                    .atStartOfDay();                                             // 今年 01-01 00:00:00
 
             List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
                     data.getSymbol(),
-                    start30Days,
+                    startOfYear,
                     nowTime
             );
 
@@ -727,13 +732,13 @@ public class AITradingEngine {
             long lossCount = closedOrders.size() - winCount;
             double winRate = (winCount + lossCount) > 0 ? (winCount * 100.0 / (winCount + lossCount)) : 0.0;
 
-            md.append(String.format("🟢 今日开仓次数：%d 次  \n", openCount));
-            md.append(String.format("🔵 今日平仓次数：%d 次  \n", closeCount));
-            md.append(String.format("🏆 今日胜率：%.1f%% (盈利 %d 单 / 亏损 %d 单)  \n", winRate, winCount, lossCount));
+            md.append(String.format("🟢 " + currentYear + "年开仓次数：%d 次  \n", openCount));
+            md.append(String.format("🔵 " + currentYear + "年平仓次数：%d 次  \n", closeCount));
+            md.append(String.format("🏆 " + currentYear + "年胜率：%.1f%% (盈利 %d 单 / 亏损 %d 单)  \n", winRate, winCount, lossCount));
 
             // =============== 📄 今日详细下单记录 ===============
             if (!todayOrders.isEmpty()) {
-                md.append("\n\n### 📄 今日详细下单记录\n");
+                md.append("\n\n### 📄 " + currentYear + "年详细下单记录\n");
                 DateTimeFormatter hhmmss = DateTimeFormatter.ofPattern("HH:mm:ss");
                 for (TradeOrderEntity order : todayOrders) {
                     boolean isClosed = Boolean.TRUE.equals(order.getClosed());
@@ -761,7 +766,7 @@ public class AITradingEngine {
                     ));
                 }
             } else {
-                md.append("📭 今日暂无下单记录。\n");
+                md.append("📭 " + currentYear + "年暂无下单记录。\n");
             }
 
             md.append("━━━━━━━━━━━━━━━━━━━━━━━\n");
@@ -778,7 +783,6 @@ public class AITradingEngine {
             log.error("❌ Discord 推送失败: {}", e.getMessage(), e);
         }
     }
-
 
 
     /**

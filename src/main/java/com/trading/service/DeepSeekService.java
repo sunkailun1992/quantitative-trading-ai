@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -644,13 +645,14 @@ public class DeepSeekService {
             double stopLossUp = entryPrice * (1 + stopLossPercent);
             prompt.append(String.format("🟡 当前无持仓，建议关注风险区间: $%.2f - $%.2f (±%.1f%%)\n", stopLossDown, stopLossUp, stopLossPercent * 100));
         }
-        // === 📈 当日交易统计 ===
-        LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
-        LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
+        // === 📈 当年交易统计 ===
+        LocalDateTime nowTime = LocalDateTime.now();                         // 当前时间
+        LocalDateTime startOfYear = LocalDate.now().withDayOfYear(1)         // 今年第一天
+                .atStartOfDay();                                             // 今年 01-01 00:00:00
 
         List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
                 md1h.getSymbol(),
-                start30Days,
+                startOfYear,
                 nowTime
         );
 
@@ -688,17 +690,17 @@ public class DeepSeekService {
         double winRate = (winCount + lossCount) > 0 ? (winCount * 100.0 / (winCount + lossCount)) : 0.0;
 
         // === 📊 当日交易统计输出（不含任何金额汇总） ===
-        prompt.append("\n=== 📊 当日交易活动统计 ===\n");
-        prompt.append(String.format("今日开仓次数: %d 次\n", openCount));
-        prompt.append(String.format("今日平仓次数: %d 次\n", closeCount));
-        prompt.append(String.format("今日胜率: %.1f%% (盈利%d单 / 亏损%d单)\n", winRate, winCount, lossCount));
-        prompt.append("⚠️ 限制规则：若当日交易次数已≥50次，AI应避免重复下单，除非信号极强。\n");
+        String currentYear = String.valueOf(LocalDate.now().getYear());
+        prompt.append("\n=== 📊 " + currentYear + "年交易活动统计 ===\n");
+        prompt.append(String.format(currentYear + "年开仓次数: %d 次\n", openCount));
+        prompt.append(String.format(currentYear + "平仓次数: %d 次\n", closeCount));
+        prompt.append(String.format(currentYear + "年胜率: %.1f%% (盈利%d单 / 亏损%d单)\n", winRate, winCount, lossCount));
         prompt.append("⚖️ 若当日胜率走低，AI应降低杠杆与仓位，优先考虑风险控制或HOLD。\n");
 
 
-        // === 📄 今日详细下单记录（不展示盈亏金额，只给方向性收益率） ===
+        // === 📄 今年详细下单记录（不展示盈亏金额，只给方向性收益率） ===
         if (!todayOrders.isEmpty()) {
-            prompt.append("\n=== 📄 今日详细下单记录 ===\n");
+            prompt.append("\n=== 📄 " + currentYear + "年详细下单记录 ===\n");
             DateTimeFormatter hhmmss = DateTimeFormatter.ofPattern("HH:mm:ss");
 
             for (TradeOrderEntity order : todayOrders) {
@@ -733,7 +735,7 @@ public class DeepSeekService {
                 ));
             }
         } else {
-            prompt.append("今日暂无下单记录。\n");
+            prompt.append(currentYear + "年暂无下单记录。\n");
         }
 
         // 🆕 从 Service 中一次性获取「每个作者最新的一条大行情分析」         // 使用你刚写的 Service
@@ -1152,7 +1154,7 @@ public class DeepSeekService {
             String requestBodyJson = objectMapper.writeValueAsString(requestBody);
             log.info("🔧 发送给DeepSeek的请求体: {}", requestBodyJson);
 
-            String response = webClient.post().uri("/chat/completions").header("Authorization", "Bearer " + apiKey).header("Content-Type", "application/json").bodyValue(requestBody).retrieve().bodyToMono(String.class) .timeout(Duration.ofMinutes(30)).block();
+            String response = webClient.post().uri("/chat/completions").header("Authorization", "Bearer " + apiKey).header("Content-Type", "application/json").bodyValue(requestBody).retrieve().bodyToMono(String.class).timeout(Duration.ofMinutes(30)).block();
 
             log.info("✅ DeepSeek API响应: {}", response);
             return response;
