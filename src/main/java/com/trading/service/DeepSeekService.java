@@ -275,7 +275,7 @@ public class DeepSeekService {
                         from15m,                   // 起始时间
                         now                        // 结束时间
                 );
-        prompt.append("\n📘 [15分钟K线 - 最近1天 + 技术指标]\n");                          // 添加区块标题
+        prompt.append("\n📘 [15分钟K线 - 最近7天 + 技术指标]\n");                          // 添加区块标题
 
         List<Double> closes15m = new ArrayList<>();                                       // 收盘价列表
         List<Double> highs15m = new ArrayList<>();                                        // 最高价列表
@@ -362,7 +362,7 @@ public class DeepSeekService {
                         from1h,
                         now
                 );
-        prompt.append("\n📗 [1小时K线 - 最近3天 + 技术指标]\n");                           // 添加标题
+        prompt.append("\n📗 [1小时K线 - 最近30天 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1h = new ArrayList<>();
         List<Double> highs1h = new ArrayList<>();
@@ -453,7 +453,7 @@ public class DeepSeekService {
                         from1d,
                         now
                 );
-        prompt.append("\n📙 [日线K线 - 最近14天 + 技术指标]\n");                           // 添加标题
+        prompt.append("\n📙 [日线K线 - 最近360天 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1d = new ArrayList<>();
         List<Double> highs1d = new ArrayList<>();
@@ -540,7 +540,7 @@ public class DeepSeekService {
         // ========================================================================
         List<MarketKlineWeeklyEntity> all1w = marketKlineWeeklyRepository
                 .findBySymbolOrderByOpenTimeAsc(md1w.getSymbol());                                 // ✅ 获取全部周线数据
-        prompt.append("\n📒 [周线K线 - 最近2个月 + 技术指标]\n");                           // 添加标题
+        prompt.append("\n📒 [周线K线 - 全部 + 技术指标]\n");                           // 添加标题
 
         List<Double> closes1w = new ArrayList<>();
         List<Double> highs1w = new ArrayList<>();
