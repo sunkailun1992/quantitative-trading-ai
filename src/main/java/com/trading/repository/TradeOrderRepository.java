@@ -22,20 +22,18 @@ public interface TradeOrderRepository extends JpaRepository<TradeOrderEntity, Lo
      */
     List<TradeOrderEntity> findTop20BySymbolOrderByCreatedAtDesc(String symbol);
 
+
     /**
-     * 查询所有订单（按创建时间倒序）
+     * ✅ 时间区间 + 交易对过滤（工程级推荐）
      */
-    List<TradeOrderEntity> findTop50ByOrderByCreatedAtDesc();
+    List<TradeOrderEntity> findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
+            String symbol,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 
     /**
      * ✅ 查询某交易对最新未平仓订单（closed = false 或 null）
      */
     Optional<TradeOrderEntity> findTop1BySymbolAndClosedFalseOrderByCreatedAtDesc(String symbol);
-
-    @Query("select t from TradeOrderEntity t " +                      // 使用 JPQL 自定义查询
-            "where (t.closed = false or t.closed is null) " +          // 条件1：未平仓（false 或 NULL）
-            "and t.createdAt < :cutoff")                               // 条件2：创建时间早于给定“今天零点”
-    List<TradeOrderEntity> findStaleOpenOrders(                       // 方法名：查找“过期的未平仓订单”
-                                                                      @Param("cutoff") LocalDateTime cutoff                      // 命名参数：cutoff 表示“今天 00:00:00”
-    );                                                                // 方法结束
 }

@@ -368,7 +368,6 @@ public class AITradingEngine {
         log.info("   🧮 占用保证金: ${}", String.format("%.2f", portfolio.getMarginUsed() != null ? portfolio.getMarginUsed() : 0.0));
         log.info("   ⚠️ 强平价格: ${}", String.format("%.2f", portfolio.getLiquidationPrice() != null ? portfolio.getLiquidationPrice() : 0.0));
         // 盈亏区块
-        // 🎯 计算持仓盈亏百分比
         double positionPnLPercent = calculatePositionPnLPercent(portfolio, currentPrice, entryPrice);
         String positionPnlEmoji = positionPnLPercent >= 0 ? "🟢 盈利" : "🔴 亏损";
         log.info("   {} 持仓盈亏: {}%", positionPnlEmoji, String.format("%.2f", Math.abs(positionPnLPercent))); // 新增持仓盈亏百分比
@@ -521,11 +520,6 @@ public class AITradingEngine {
         md.append("⚠️ **强平价格：** $")
                 .append(String.format("%.2f", portfolio.getLiquidationPrice() != null ? portfolio.getLiquidationPrice() : 0.0))
                 .append("  \n");
-        // 🎯 关键修改：计算并显示持仓盈亏百分比（用于止盈止损判断）
-        double positionPnLPercent = calculatePositionPnLPercent(portfolio, currentPrice, entryPrice);
-        String positionPnlEmoji = positionPnLPercent >= 0 ? "🟢" : "🔴";
-        String positionPnlStatus = positionPnLPercent >= 0 ? "盈利" : "亏损";
-        md.append(String.format("%s **持仓盈亏百分比：** %s %.2f%%  \n", positionPnlEmoji, positionPnlStatus, Math.abs(positionPnLPercent)));
         // 📉 未实现盈亏（带红/绿标识）
         double unrealisedPnL = portfolio.getUnrealisedPnL() != null ? portfolio.getUnrealisedPnL() : 0.0;
         String pnlEmoji = unrealisedPnL >= 0 ? "🟢" : "🔴";
@@ -539,14 +533,14 @@ public class AITradingEngine {
 
         // ========================== 📊 当日交易统计 ==========================
         md.append("### 📊 当日交易活动统计\n");
-        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusHours(23).plusMinutes(59).plusSeconds(59);
+        LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
+        LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
 
-        List<TradeOrderEntity> todayOrders = tradeOrderRepository.findTop50ByOrderByCreatedAtDesc()
-                .stream()
-                .filter(o -> o.getSymbol().equalsIgnoreCase(data.getSymbol()))
-                .filter(o -> !o.getCreatedAt().isBefore(startOfDay) && !o.getCreatedAt().isAfter(endOfDay))
-                .toList();
+        List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
+                data.getSymbol(),
+                start30Days,
+                nowTime
+        );
 
         long openCount = todayOrders.stream()
                 .filter(o -> o.getSide() != null)
@@ -700,14 +694,14 @@ public class AITradingEngine {
 
             // =============== 📊 当日交易活动统计 ===============
             md.append("### 📊 当日交易活动统计\n");
-            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-            LocalDateTime endOfDay = startOfDay.plusHours(23).plusMinutes(59).plusSeconds(59);
+            LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
+            LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
 
-            List<TradeOrderEntity> todayOrders = tradeOrderRepository.findTop50ByOrderByCreatedAtDesc()
-                    .stream()
-                    .filter(o -> o.getSymbol().equalsIgnoreCase(data.getSymbol()))
-                    .filter(o -> !o.getCreatedAt().isBefore(startOfDay) && !o.getCreatedAt().isAfter(endOfDay))
-                    .toList();
+            List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
+                    data.getSymbol(),
+                    start30Days,
+                    nowTime
+            );
 
             long openCount = todayOrders.stream()
                     .filter(o -> o.getSide() != null)

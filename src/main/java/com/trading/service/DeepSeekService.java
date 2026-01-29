@@ -584,12 +584,6 @@ public class DeepSeekService {
         // ⚠️ 强平价格
         prompt.append(String.format("强平价格(Liquidation Price): $%.2f\n",
                 portfolio.getLiquidationPrice() != null ? portfolio.getLiquidationPrice() : 0.0));
-        // 🎯 关键修改：计算并显示持仓盈亏百分比（用于止盈止损判断）
-        double positionPnLPercent = calculatePositionPnLPercent(portfolio, currentPrice, entryPrice);
-        String positionPnlEmoji = positionPnLPercent >= 0 ? "🟢" : "🔴";
-        String positionPnlStatus = positionPnLPercent >= 0 ? "盈利" : "亏损";
-        prompt.append(String.format("持仓盈亏百分比(Position PnL %%): %s %s %.2f%%\n",
-                positionPnlEmoji, positionPnlStatus, Math.abs(positionPnLPercent)));
         // 📉 未实现盈亏金额
         double pnlValue = portfolio.getUnrealisedPnL() != null ? portfolio.getUnrealisedPnL() : 0.0;
         String pnlEmoji = pnlValue >= 0 ? "🟢 盈利" : "🔴 亏损";
@@ -651,15 +645,14 @@ public class DeepSeekService {
             prompt.append(String.format("🟡 当前无持仓，建议关注风险区间: $%.2f - $%.2f (±%.1f%%)\n", stopLossDown, stopLossUp, stopLossPercent * 100));
         }
         // === 📈 当日交易统计 ===
-        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();        // 当天00:00
-        LocalDateTime endOfDay = startOfDay.plusHours(23).plusMinutes(59).plusSeconds(59);  // 当天23:59
+        LocalDateTime nowTime = LocalDateTime.now();          // 当前时间
+        LocalDateTime start30Days = nowTime.minusDays(30);   // 30天前
 
-        List<TradeOrderEntity> todayOrders = tradeOrderRepository
-                .findTop50ByOrderByCreatedAtDesc()
-                .stream()
-                .filter(o -> o.getSymbol().equalsIgnoreCase(md1h.getSymbol()))
-                .filter(o -> !o.getCreatedAt().isBefore(startOfDay) && !o.getCreatedAt().isAfter(endOfDay))
-                .toList();
+        List<TradeOrderEntity> todayOrders = tradeOrderRepository.findBySymbolAndCreatedAtBetweenOrderByCreatedAtDesc(
+                md1h.getSymbol(),
+                start30Days,
+                nowTime
+        );
 
         // ✅ 统计「开仓」次数：未平仓（closed=false 或 null），side=BUY/SELL
         long openCount = todayOrders.stream()
